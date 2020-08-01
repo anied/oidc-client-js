@@ -165,7 +165,10 @@ export class UserManager extends OidcClient {
         return this._loadUser().then(user => {
             if (user && user.refresh_token) {
                 args.refresh_token = user.refresh_token;
-                return this._useRefreshToken(args);
+                return this._useRefreshToken(args).catch(err => {
+                    Log.error("UserManager.signinSilent: A problem occurred");
+                    this._events._raiseSilentSigninError(err);
+                });
             }
             else {
                 args.id_token_hint = args.id_token_hint || (this.settings.includeIdTokenInSilentRenew && user && user.id_token);
