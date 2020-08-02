@@ -157,7 +157,16 @@ export class UserManager extends OidcClient {
         });
     }
 
-    signinSilent(args = {}) {
+    signinSilent(args) {
+        return this.signinSilentInternal(args)
+        .then(result => result)
+        .catch(err => {
+            Log.error("UserManager.signinSilentInternal: A problem occurred");
+            this._events._raiseSilentSigninError(err);
+        });
+    }
+
+    signinSilentInternal(args = {}) {
         args = Object.assign({}, args);
 
         args.request_type = "si:s";
@@ -165,10 +174,7 @@ export class UserManager extends OidcClient {
         return this._loadUser().then(user => {
             if (user && user.refresh_token) {
                 args.refresh_token = user.refresh_token;
-                return this._useRefreshToken(args).catch(err => {
-                    Log.error("UserManager.signinSilent: A problem occurred");
-                    this._events._raiseSilentSigninError(err);
-                });
+                return this._useRefreshToken(args);
             }
             else {
                 args.id_token_hint = args.id_token_hint || (this.settings.includeIdTokenInSilentRenew && user && user.id_token);
@@ -249,7 +255,7 @@ export class UserManager extends OidcClient {
     _signinSilentIframe(args = {}) {
         let url = args.redirect_uri || this.settings.silent_redirect_uri || this.settings.redirect_uri;
         if (!url) {
-            Log.error("UserManager.signinSilent: No silent_redirect_uri configured");
+            Log.error("UserManager.signinSilentInternal: No silent_redirect_uri configured");
             return Promise.reject(new Error("No silent_redirect_uri configured"));
         }
 
@@ -262,10 +268,10 @@ export class UserManager extends OidcClient {
         }).then(user => {
             if (user) {
                 if (user.profile && user.profile.sub) {
-                    Log.info("UserManager.signinSilent: successful, signed in sub: ", user.profile.sub);
+                    Log.info("UserManager.signinSilentInternal: successful, signed in sub: ", user.profile.sub);
                 }
                 else {
-                    Log.info("UserManager.signinSilent: no sub");
+                    Log.info("UserManager.signinSilentInternal: no sub");
                 }
             }
 
