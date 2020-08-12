@@ -158,7 +158,9 @@ export class JsonService {
                                 var payload = JSON.parse(req.responseText);
                                 if (payload && payload.error) {
                                     Log.error("JsonService.postForm: Error from server: ", payload.error);
-                                    reject(new Error(payload.error));
+                                    const eventError = new Error(payload.error);
+                                    Object.assign(eventError, payload);
+                                    reject(eventError);
                                     return;
                                 }
                             }
