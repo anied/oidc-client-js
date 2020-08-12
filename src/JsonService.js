@@ -159,7 +159,11 @@ export class JsonService {
                                 if (payload && payload.error) {
                                     Log.error("JsonService.postForm: Error from server: ", payload.error);
                                     const eventError = new Error(payload.error);
-                                    Object.assign(eventError, payload);
+                                    for (let [key, val] of Object.entries(payload)) {
+                                        if (eventError[key] === undefined) {
+                                            eventError[key] = val;
+                                        }
+                                    }
                                     reject(eventError);
                                     return;
                                 }
